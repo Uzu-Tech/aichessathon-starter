@@ -26,7 +26,7 @@ def evaluate(pieces: np.ndarray, mine: np.ndarray, mobility: int) -> int:
             continue
         value = PIECE_VALUE[piece]
         material += value if mine[square] else -value
-    return material + MOBILITY_WEIGHT * mobility
+    return material + MOBILITY_WEIGHT * mobility # type: ignore
 
 
 def encode(board: chess.Board) -> tuple[np.ndarray, np.ndarray]:
