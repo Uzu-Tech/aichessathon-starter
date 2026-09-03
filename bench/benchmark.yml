@@ -1,0 +1,19 @@
+# Champion vs challenger benchmark configuration
+
+champion: baselines/minimax
+challenger: .
+
+positions: bench/positions.txt
+
+# Number of games.
+# Each position is normally played twice (both color assignments).
+games: 50
+# Chess clock
+base_ms: 120000
+increment_ms: 500
+# Maximum number of plies per game
+ply_cap: 300
+# Number of games running simultaneously
+workers: 8
+# Optional output file
+output: bench/results/latest.json
