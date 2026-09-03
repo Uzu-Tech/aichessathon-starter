@@ -8,7 +8,7 @@ import chess.polyglot
 from user.stats import SearchResult
 from time import perf_counter
 from collections import Counter
-
+from evaluate import evaluate
 PIECE_VALUE = {
     chess.PAWN: 100.0,
     chess.KNIGHT: 320.0,
