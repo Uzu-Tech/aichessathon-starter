@@ -52,13 +52,7 @@ def get_budget_ms(board: chess.Board, time_left_ms):
 
     return max(budget_ms, 50)  # never budget below 20ms
 
-def evaluate(board: chess.Board) -> float:
-    mover = board.turn
-    material = sum(
-        value * (len(board.pieces(piece, mover)) - len(board.pieces(piece, not mover)))
-        for piece, value in PIECE_VALUE.items()
-    )
-    return material
+
 
 
 def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
