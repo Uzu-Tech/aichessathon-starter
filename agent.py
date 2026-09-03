@@ -9,17 +9,9 @@ from user.stats import SearchResult
 from time import perf_counter
 from collections import Counter
 
-PIECE_VALUE = {
-    chess.PAWN: 100.0,
-    chess.KNIGHT: 320.0,
-    chess.BISHOP: 330.0,
-    chess.ROOK: 500.0,
-    chess.QUEEN: 900.0,
-    chess.KING: 1000.0 # Low val for move ordering
-}
+from config import PIECE_VALUE
+from evaluate import evaluate
 
-
-MOBILITY_WEIGHT = 4.0
 MATE = 1e6
 INF = float('inf')
 NODES_PER_TIME_CHECK = 1 << 6 # Power of 2
@@ -51,15 +43,6 @@ def get_budget_ms(board: chess.Board, time_left_ms):
         budget_ms = min(budget_ms, time_left_ms * 0.05)
 
     return max(budget_ms, 50)  # never budget below 20ms
-
-def evaluate(board: chess.Board) -> float:
-    mover = board.turn
-    material = sum(
-        value * (len(board.pieces(piece, mover)) - len(board.pieces(piece, not mover)))
-        for piece, value in PIECE_VALUE.items()
-    )
-    return material
-
 
 def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
     if result.nodes & (NODES_PER_TIME_CHECK - 1) == 0:
