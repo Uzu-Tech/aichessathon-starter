@@ -1,7 +1,7 @@
 # Champion vs challenger benchmark configuration
 
 champion: baselines/minimax
-challenger: .
+challenger: challenger
 
 positions: bench/positions.txt
 
