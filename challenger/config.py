@@ -20,7 +20,7 @@ PIECE_VALUE: dict[chess.PieceType, float] = {
 
 MOBILITY_WEIGHT = 4.0
 
-# How much of the middlegame each piece keeps on the board. Pawns count for nothing:
+# How much of the MIDDLE_GAME each piece keeps on the board. Pawns count for nothing:
 # a board bare of everything else is an endgame however many pawns are left.
 PHASE_WEIGHT: dict[chess.PieceType, int] = {
     chess.PAWN: 0,
@@ -146,7 +146,7 @@ QUEEN_PST_BLACK = [
 
 # The king is the one piece whose best square flips completely between the phases:
 # tucked behind pawns while queens are on, marching to the centre once they are off.
-KING_PST_MIDDLEGAME_WHITE = [
+KING_PST_MIDDLE_GAME_WHITE = [
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30,
@@ -157,7 +157,7 @@ KING_PST_MIDDLEGAME_WHITE = [
      20,  30,  10,   0,   0,  10,  30,  20,
 ]
 
-KING_PST_MIDDLEGAME_BLACK = [
+KING_PST_MIDDLE_GAME_BLACK = [
      20,  30,  10,   0,   0,  10,  30,  20,
      20,  20,   0,   0,   0,   0,  20,  20,
     -10, -20, -20, -20, -20, -20, -20, -10,
@@ -190,14 +190,14 @@ KING_PST_ENDGAME_BLACK = [
     -50, -40, -30, -20, -20, -30, -40, -50,
 ]
 
-PST_MIDDLEGAME: dict[chess.Color, dict[chess.PieceType, list[int]]] = {
+PST_MIDDLE_GAME: dict[chess.Color, dict[chess.PieceType, list[int]]] = {
     chess.WHITE: {
         chess.PAWN: PAWN_PST_WHITE,
         chess.KNIGHT: KNIGHT_PST_WHITE,
         chess.BISHOP: BISHOP_PST_WHITE,
         chess.ROOK: ROOK_PST_WHITE,
         chess.QUEEN: QUEEN_PST_WHITE,
-        chess.KING: KING_PST_MIDDLEGAME_WHITE,
+        chess.KING: KING_PST_MIDDLE_GAME_WHITE,
     },
     chess.BLACK: {
         chess.PAWN: PAWN_PST_BLACK,
@@ -205,13 +205,13 @@ PST_MIDDLEGAME: dict[chess.Color, dict[chess.PieceType, list[int]]] = {
         chess.BISHOP: BISHOP_PST_BLACK,
         chess.ROOK: ROOK_PST_BLACK,
         chess.QUEEN: QUEEN_PST_BLACK,
-        chess.KING: KING_PST_MIDDLEGAME_BLACK,
+        chess.KING: KING_PST_MIDDLE_GAME_BLACK,
     },
 }
 
 PST_ENDGAME: dict[chess.Color, dict[chess.PieceType, list[int]]] = {
-    chess.WHITE: {**PST_MIDDLEGAME[chess.WHITE], chess.KING: KING_PST_ENDGAME_WHITE},
-    chess.BLACK: {**PST_MIDDLEGAME[chess.BLACK], chess.KING: KING_PST_ENDGAME_BLACK},
+    chess.WHITE: {**PST_MIDDLE_GAME[chess.WHITE], chess.KING: KING_PST_ENDGAME_WHITE},
+    chess.BLACK: {**PST_MIDDLE_GAME[chess.BLACK], chess.KING: KING_PST_ENDGAME_BLACK},
 }
 
 Table = list[list[list[float]]]
@@ -230,15 +230,10 @@ def build_table(tables: dict[chess.Color, dict[chess.PieceType, list[int]]]) -> 
                 table[piece_type][color][square] =  sign*(value + squares[square ^ 56])
     return table
 
-
-
-
-
-class config:
-    def __innit__ (self):
-        self.MIDDLEGAME_TABLE = build_table(PST_MIDDLEGAME)
+class Config:
+    def __init__ (self):
+        self.MIDDLE_GAME_TABLE = build_table(PST_MIDDLE_GAME)
         self.ENDGAME_TABLE = build_table(PST_ENDGAME)
         self.PIECE_VALUE = PIECE_VALUE
         self.PHASE_WEIGHT = PHASE_WEIGHT
         self.TOTAL_PHASE = 24
-config = config()
