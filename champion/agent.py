@@ -145,5 +145,4 @@ def get_move(fen: str, time_left_ms: int) -> str:
             
         except SearchTimeout:
             break
-        
     return best_move.uci() # type: ignore
