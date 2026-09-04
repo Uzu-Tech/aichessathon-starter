@@ -31,7 +31,7 @@ PHASE_WEIGHT: dict[chess.PieceType, int] = {
     chess.KING: 0,
 }
 
-TOTAL_PHASE = 24  # 4 knights + 4 bishops + 4 rooks * 2 + 2 queens * 4
+  # 4 knights + 4 bishops + 4 rooks * 2 + 2 queens * 4
 
 # Piece-square tables, after Michniewski's simplified evaluation function.
 PAWN_PST_WHITE = [
@@ -213,3 +213,32 @@ PST_ENDGAME: dict[chess.Color, dict[chess.PieceType, list[int]]] = {
     chess.WHITE: {**PST_MIDDLEGAME[chess.WHITE], chess.KING: KING_PST_ENDGAME_WHITE},
     chess.BLACK: {**PST_MIDDLEGAME[chess.BLACK], chess.KING: KING_PST_ENDGAME_BLACK},
 }
+
+Table = list[list[list[float]]]
+
+
+def build_table(tables: dict[chess.Color, dict[chess.PieceType, list[int]]]) -> Table:
+    table: Table = [[[0.0] * 64 for _ in range(2)] for _ in range(len(chess.PIECE_TYPES) + 1)]
+    for color, squares_by_piece in tables.items():
+        sign = 1.0 if color else -1.0
+        for piece_type, squares in squares_by_piece.items():
+            value = PIECE_VALUE[piece_type]
+            for square in chess.SQUARES:
+                # The tables are written a8 first, so a square's index into them is its
+                # own index with the ranks flipped. Both colours read theirs the same
+                # way; it is the tables themselves that are mirrored.
+                table[piece_type][color][square] =  sign*(value + squares[square ^ 56])
+    return table
+
+
+
+
+
+class config:
+    def __innit__ (self):
+        self.MIDDLEGAME_TABLE = build_table(PST_MIDDLEGAME)
+        self.ENDGAME_TABLE = build_table(PST_ENDGAME)
+        self.PIECE_VALUE = PIECE_VALUE
+        self.PHASE_WEIGHT = PHASE_WEIGHT
+        self.TOTAL_PHASE = 24
+config = config()

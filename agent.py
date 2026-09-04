@@ -196,7 +196,9 @@ def get_move(fen: str, time_left_ms: int) -> str:
             
     total_nodes = sum(r.nodes for r in results)
     total_cutoffs = sum(r.cutoffs for r in results)
+    # Only a depth that finished is trustworthy; the timed-out one saw too few moves.
     final_depth = results[-1].depth if results else 0
+    final_score = results[-1].best_score if results else 0.0
 
     print(json.dumps({
         "stats": True,
@@ -204,5 +206,6 @@ def get_move(fen: str, time_left_ms: int) -> str:
         "depth": final_depth,
         "nodes": total_nodes,
         "cutoffs": total_cutoffs,
+        "score": final_score,
     }), file=sys.stderr, flush=True)
     return best_move.uci() # type: ignore
