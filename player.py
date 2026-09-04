@@ -22,8 +22,8 @@ from time import perf_counter
 import chess
 
 import agent
-from config import PIECE_VALUE
-from evaluate import evaluate
+from challenger.config import PIECE_VALUE
+from challenger.evaluate import evaluate
 from user.stats import SearchResult
 
 HELP = """

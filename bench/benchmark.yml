@@ -9,7 +9,7 @@ positions: bench/positions.txt
 # Each position is normally played twice (both color assignments).
 games: 50
 # Chess clock
-base_ms: 120000
+base_ms: 50000
 increment_ms: 500
 # Maximum number of plies per game
 ply_cap: 300

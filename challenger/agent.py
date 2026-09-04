@@ -12,18 +12,20 @@ from evaluation import evaluate
 from results import SearchResult
 from utils import MATE
 from transposition import TranspositionTable, EXACT, LOWER_BOUND, UPPER_BOUND
+from config import Config
 
 INF = float('inf')
 MAX_DEPTH = 10
 
 board_state_counts = Counter()
 tt = TranspositionTable()
+config = Config()
 
 def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
     check_time(result.nodes, deadline)
     
     result.nodes += 1
-    stand_pat = evaluate(board)
+    stand_pat = evaluate(board, config)
     
     if stand_pat >= beta: # alpha - beta cutoff
         result.cutoffs += 1
