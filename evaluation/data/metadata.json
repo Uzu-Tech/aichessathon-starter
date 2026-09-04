@@ -1,0 +1,52 @@
+{
+  "columns": [
+    "fen",
+    "halfkp32",
+    "piece768",
+    "evaluation_cp"
+  ],
+  "complete": true,
+  "created_at": "2026-09-04T09:35:39.340491+00:00",
+  "data_dir": "C:\\Users\\ivanm\\aichessathon-starter\\evaluation\\data",
+  "dtypes": {
+    "evaluation_cp": "float32[N]",
+    "fen": "unicode/bytes",
+    "halfkp32": "uint32[N,64]",
+    "piece768": "uint8[N,768]"
+  },
+  "elapsed_seconds": 31.61381799999799,
+  "label": {
+    "mate_mapping_cp": 10000.0,
+    "name": "evaluation_cp",
+    "point_of_view": "white",
+    "source_point_of_view": "side_to_move"
+  },
+  "note": "Metadata recovered after validating existing shards; NPZ files were not rewritten.",
+  "pipeline": "legacy_recovered",
+  "pipeline_version": 2,
+  "representations": [
+    "halfkp32",
+    "piece768"
+  ],
+  "schema_version": 2,
+  "selected": 9800000,
+  "shard_counts": {
+    "test": 10,
+    "train": 79,
+    "validation": 9
+  },
+  "skipped": {},
+  "source": {
+    "mtime_ns": 1788281718384514600,
+    "path": "C:\\Users\\ivanm\\aichessathon-starter\\evaluation\\data\\lichess_db_eval.jsonl (1).zst",
+    "size": 21681515630
+  },
+  "source_records": 0,
+  "split_counts": {
+    "test": 1000000,
+    "train": 7900000,
+    "validation": 900000
+  },
+  "split_policy": "legacy deterministic FEN split (existing shards preserved)",
+  "total_positions": 9800000
+}
