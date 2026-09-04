@@ -8,3 +8,5 @@ PIECE_VALUE = {
     chess.QUEEN: 900.0,
     chess.KING: 1000.0 # Low val for move ordering
 }
+
+MATE = 1e6
