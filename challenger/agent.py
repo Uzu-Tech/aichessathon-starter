@@ -8,7 +8,7 @@ from chess.polyglot import zobrist_hash
 from collections import Counter
 from ordering import sorted_moves, order_score
 from timing import SearchTimeout, get_budget_ms, check_time, get_deadline
-from evaluation import evaluate
+from evaluate import evaluate
 from results import SearchResult
 from utils import MATE
 from transposition import TranspositionTable, EXACT, LOWER_BOUND, UPPER_BOUND
@@ -21,11 +21,12 @@ board_state_counts = Counter()
 tt = TranspositionTable()
 config = Config()
 
-def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
+def quiescence_search(position: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
     check_time(result.nodes, deadline)
-    
+
+    board = position
     result.nodes += 1
-    stand_pat = evaluate(board, config)
+    stand_pat = evaluate(position, config)
     
     if stand_pat >= beta: # alpha - beta cutoff
         result.cutoffs += 1
@@ -41,11 +42,11 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, d
     )
 
     for move in captures:
-        board.push(move)
+        position.push(move)
         try:
-            score = -quiescence_search(board, -beta, -alpha, ply + 1, deadline, result)
+            score = -quiescence_search(position, -beta, -alpha, ply + 1, deadline, result)
         finally:
-            board.pop()
+            position.pop()
 
         if score >= beta:
             result.cutoffs += 1
@@ -57,11 +58,12 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, d
 
 
 def negamax(
-    board: chess.Board, alpha: float, beta: float, depth: int, ply: int, deadline: float, result: SearchResult
+    position: chess.Board, alpha: float, beta: float, depth: int, ply: int, deadline: float, result: SearchResult
 ) -> float:
     check_time(result.nodes, deadline)
     result.nodes += 1
 
+    board = position
     current_hash = zobrist_hash(board)
     if board.is_insufficient_material() or board_state_counts[current_hash] >= 2:
         return 0.0
@@ -73,7 +75,7 @@ def negamax(
         return tt_score
 
     if depth == 0:
-        return quiescence_search(board, alpha, beta, ply, deadline, result)
+        return quiescence_search(position, alpha, beta, ply, deadline, result)
 
     moves = sorted_moves(board, tt_move)
     
@@ -86,18 +88,18 @@ def negamax(
     best_move = moves[0]
 
     for move in moves:
-        board.push(move)
+        position.push(move)
         next_hash = zobrist_hash(board)
         board_state_counts[next_hash] += 1
 
         try:
             score = -negamax(
-                board, alpha=-beta, beta=-alpha, depth=depth - 1, ply=ply + 1,
+                position, alpha=-beta, beta=-alpha, depth=depth - 1, ply=ply + 1,
                 deadline=deadline, result=result
             )
         finally:
             board_state_counts[next_hash] -= 1
-            board.pop()
+            position.pop()
 
         if score > best_score:
             best_score = score
@@ -124,7 +126,8 @@ def negamax(
 
 
 def get_move(fen: str, time_left_ms: int) -> str:
-    board = chess.Board(fen)
+    position = chess.Board(fen)
+    board = position
     current_hash = zobrist_hash(board)
     board_state_counts[current_hash] += 1  
     
@@ -138,7 +141,7 @@ def get_move(fen: str, time_left_ms: int) -> str:
         try:
             result = SearchResult(depth=depth, budget_ms=budget_ms)
             negamax(
-                board, alpha=-INF, beta=INF, depth=depth,
+                position, alpha=-INF, beta=INF, depth=depth,
                 ply=0, deadline=deadline, result=result
             )
             if result.best_move is not None:   # <-- only trust it if it was actually set
