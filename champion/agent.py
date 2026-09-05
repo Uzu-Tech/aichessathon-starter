@@ -147,5 +147,17 @@ def get_move(fen: str, time_left_ms: int) -> str:
         except SearchTimeout:
             break
    
+           
+    total_nodes = sum(r.nodes for r in results)
+    total_cutoffs = sum(r.cutoffs for r in results)
+    final_depth = results[-1].depth if results else 0
+
+    print(json.dumps({
+        "stats": True,
+        "ply": board.ply(),
+        "depth": final_depth,
+        "nodes": total_nodes,
+        "cutoffs": total_cutoffs,
+    }), file=sys.stderr, flush=True)
     
     return best_move.uci() # type: ignore

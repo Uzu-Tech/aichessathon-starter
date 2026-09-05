@@ -1,42 +1,48 @@
-
 import json
 import sys
+from collections import Counter
 
 import chess
 from chess.polyglot import zobrist_hash
-from collections import Counter
-from ordering import sorted_moves, order_score
-from timing import SearchTimeout, get_budget_ms, check_time, get_deadline
-from evaluation import evaluate
-from results import SearchResult
-from utils import MATE
-from transposition import TranspositionTable, EXACT, LOWER_BOUND, UPPER_BOUND
 from config import Config
+from evaluation import evaluate
+from ordering import order_score, sorted_moves
+from results import SearchResult
+from timing import SearchTimeout, check_time, get_budget_ms, get_deadline
+from transposition import EXACT, LOWER_BOUND, UPPER_BOUND, TranspositionTable
+from utils import MATE
 
-INF = float('inf')
+INF = float("inf")
 MAX_DEPTH = 10
 
 board_state_counts = Counter()
 tt = TranspositionTable()
 config = Config()
 
-def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, deadline: float, result: SearchResult):
+
+def quiescence_search(
+    board: chess.Board,
+    alpha: float,
+    beta: float,
+    ply: int,
+    deadline: float,
+    result: SearchResult,
+) -> float:
     check_time(result.nodes, deadline)
-    
+
     result.nodes += 1
     stand_pat = evaluate(board, config)
-    
-    if stand_pat >= beta: # alpha - beta cutoff
+
+    if stand_pat >= beta:  # alpha - beta cutoff
         result.cutoffs += 1
         return beta
-    
-    best_score = stand_pat
+
     alpha = max(alpha, stand_pat)
-    
+
     captures = sorted(
         board.generate_legal_captures(),
         key=lambda m: order_score(board, m, tt_move=None),
-        reverse=True
+        reverse=True,
     )
 
     for move in captures:
@@ -56,7 +62,13 @@ def quiescence_search(board: chess.Board, alpha: float, beta: float, ply: int, d
 
 
 def negamax(
-    board: chess.Board, alpha: float, beta: float, depth: int, ply: int, deadline: float, result: SearchResult
+    board: chess.Board,
+    alpha: float,
+    beta: float,
+    depth: int,
+    ply: int,
+    deadline: float,
+    result: SearchResult,
 ) -> float:
     check_time(result.nodes, deadline)
     result.nodes += 1
@@ -75,7 +87,7 @@ def negamax(
         return quiescence_search(board, alpha, beta, ply, deadline, result)
 
     moves = sorted_moves(board, tt_move)
-    
+
     # If no moves must be checkmate or stalemate, adding in ply count so we look for faster mates
     if not moves:
         return -(MATE - ply) if board.is_check() else 0.0
@@ -84,16 +96,47 @@ def negamax(
     best_score = -INF
     best_move = moves[0]
 
-    for move in moves:
+    # The first move gets a full window.  Well-ordered later moves are very
+    # unlikely to improve alpha, so test them with a one-centipawn window
+    # first.  Only a possible improvement needs the expensive re-search.
+    # This principal-variation search is especially effective here because
+    # the transposition-table move and captures are ordered first.
+    for move_index, move in enumerate(moves):
         board.push(move)
         next_hash = zobrist_hash(board)
         board_state_counts[next_hash] += 1
 
         try:
-            score = -negamax(
-                board, alpha=-beta, beta=-alpha, depth=depth - 1, ply=ply + 1,
-                deadline=deadline, result=result
-            )
+            if move_index == 0:
+                score = -negamax(
+                    board,
+                    alpha=-beta,
+                    beta=-alpha,
+                    depth=depth - 1,
+                    ply=ply + 1,
+                    deadline=deadline,
+                    result=result,
+                )
+            else:
+                score = -negamax(
+                    board,
+                    alpha=-alpha - 1.0,
+                    beta=-alpha,
+                    depth=depth - 1,
+                    ply=ply + 1,
+                    deadline=deadline,
+                    result=result,
+                )
+                if alpha < score < beta:
+                    score = -negamax(
+                        board,
+                        alpha=-beta,
+                        beta=-alpha,
+                        depth=depth - 1,
+                        ply=ply + 1,
+                        deadline=deadline,
+                        result=result,
+                    )
         finally:
             board_state_counts[next_hash] -= 1
             board.pop()
@@ -125,27 +168,43 @@ def negamax(
 def get_move(fen: str, time_left_ms: int) -> str:
     board = chess.Board(fen)
     current_hash = zobrist_hash(board)
-    board_state_counts[current_hash] += 1  
-    
+    board_state_counts[current_hash] += 1
+
     budget_ms = min(get_budget_ms(board, time_left_ms), time_left_ms * 0.95)
     deadline = get_deadline(budget_ms)
     results = []
-    
+
     best_move = next(iter(board.legal_moves))
-    
+
     for depth in range(1, MAX_DEPTH + 1):
         try:
             result = SearchResult(depth=depth, budget_ms=budget_ms)
             negamax(
-                board, alpha=-INF, beta=INF, depth=depth,
-                ply=0, deadline=deadline, result=result
+                board, alpha=-INF, beta=INF, depth=depth, ply=0, deadline=deadline, result=result
             )
-            if result.best_move is not None:   # <-- only trust it if it was actually set
+            if result.best_move is not None:  # <-- only trust it if it was actually set
                 best_move = result.best_move
             results.append(result)
-            
+
         except SearchTimeout:
             break
-   
-    
-    return best_move.uci() # type: ignore
+
+    total_nodes = sum(r.nodes for r in results)
+    total_cutoffs = sum(r.cutoffs for r in results)
+    final_depth = results[-1].depth if results else 0
+
+    print(
+        json.dumps(
+            {
+                "stats": True,
+                "ply": board.ply(),
+                "depth": final_depth,
+                "nodes": total_nodes,
+                "cutoffs": total_cutoffs,
+            }
+        ),
+        file=sys.stderr,
+        flush=True,
+    )
+
+    return best_move.uci()
