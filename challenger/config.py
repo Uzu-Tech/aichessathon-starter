@@ -10,11 +10,11 @@ positive where the square is good; `evaluate` applies the sign.
 import chess
 
 PIECE_VALUE: dict[chess.PieceType, float] = {
-    chess.PAWN: 75.0,
-    chess.KNIGHT: 250.0,
-    chess.BISHOP: 260.0,
-    chess.ROOK: 420.0,
-    chess.QUEEN: 775.0,
+    chess.PAWN: 100.0,
+    chess.KNIGHT: 320.0,
+    chess.BISHOP: 330.0,
+    chess.ROOK: 500.0,
+    chess.QUEEN: 900.0,
     chess.KING: 1000.0,  # Low val for move ordering
 }
 
